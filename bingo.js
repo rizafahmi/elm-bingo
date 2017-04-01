@@ -8213,27 +8213,68 @@ var _user$project$Bingo$viewPlayer = F2(
 				_1: {ctor: '[]'}
 			});
 	});
-var _user$project$Bingo$view = A2(
-	_elm_lang$html$Html$div,
-	{
-		ctor: '::',
-		_0: _elm_lang$html$Html_Attributes$class('content'),
-		_1: {ctor: '[]'}
-	},
-	{
-		ctor: '::',
-		_0: _user$project$Bingo$viewHeader('Buzzword Bingo'),
-		_1: {
+var _user$project$Bingo$view = function (model) {
+	return A2(
+		_elm_lang$html$Html$div,
+		{
 			ctor: '::',
-			_0: A2(_user$project$Bingo$viewPlayer, 'Riza', 22),
+			_0: _elm_lang$html$Html_Attributes$class('content'),
+			_1: {ctor: '[]'}
+		},
+		{
+			ctor: '::',
+			_0: _user$project$Bingo$viewHeader('Buzzword Bingo'),
 			_1: {
 				ctor: '::',
-				_0: _user$project$Bingo$viewFooter,
-				_1: {ctor: '[]'}
+				_0: A2(_user$project$Bingo$viewPlayer, model.name, model.gameNumber),
+				_1: {
+					ctor: '::',
+					_0: A2(
+						_elm_lang$html$Html$div,
+						{
+							ctor: '::',
+							_0: _elm_lang$html$Html_Attributes$class('debug'),
+							_1: {ctor: '[]'}
+						},
+						{
+							ctor: '::',
+							_0: _elm_lang$html$Html$text(
+								_elm_lang$core$Basics$toString(model)),
+							_1: {ctor: '[]'}
+						}),
+					_1: {
+						ctor: '::',
+						_0: _user$project$Bingo$viewFooter,
+						_1: {ctor: '[]'}
+					}
+				}
 			}
-		}
+		});
+};
+var _user$project$Bingo$Entry = F4(
+	function (a, b, c, d) {
+		return {id: a, phrase: b, points: c, marked: d};
 	});
-var _user$project$Bingo$main = _elm_lang$virtual_dom$Native_VirtualDom.staticProgram(_user$project$Bingo$view);
+var _user$project$Bingo$initialEntries = {
+	ctor: '::',
+	_0: A4(_user$project$Bingo$Entry, 1, 'Future-Proof', 100, false),
+	_1: {
+		ctor: '::',
+		_0: A4(_user$project$Bingo$Entry, 2, 'Doing Agile', 200, false),
+		_1: {
+			ctor: '::',
+			_0: A4(_user$project$Bingo$Entry, 3, 'Scrum', 150, false),
+			_1: {ctor: '[]'}
+		}
+	}
+};
+var _user$project$Bingo$initialModel = {name: 'Riza', gameNumber: 1, entries: _user$project$Bingo$initialEntries};
+var _user$project$Bingo$main = _elm_lang$virtual_dom$Native_VirtualDom.staticProgram(
+	_user$project$Bingo$view(_user$project$Bingo$initialModel));
+var _user$project$Bingo$Model = F3(
+	function (a, b, c) {
+		return {name: a, gameNumber: b, entries: c};
+	});
 
 var Elm = {};
 Elm['Bingo'] = Elm['Bingo'] || {};

@@ -26,7 +26,10 @@ update : Msg -> Model -> Model
 update msg model =
     case msg of
         NewGame ->
-            { model | gameNumber = model.gameNumber + 1 }
+            { model
+                | gameNumber = model.gameNumber + 1
+                , entries = initialEntries
+            }
 
         Mark id ->
             let
@@ -89,7 +92,7 @@ viewFooter =
 
 viewEntryList : Entry -> Html Msg
 viewEntryList entry =
-    li [ onClick (Mark entry.id) ]
+    li [ classList [ ( "marked", entry.marked ) ], onClick (Mark entry.id) ]
         [ span [ class "phrase" ] [ text entry.phrase ]
         , span [ class "points" ] [ text (toString entry.points) ]
         ]

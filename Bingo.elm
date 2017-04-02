@@ -4,6 +4,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Random
+import Http
 
 
 -- TYPES
@@ -17,15 +18,16 @@ type alias Model =
     { name : String, gameNumber : Int, entries : List Entry }
 
 
+
+-- UPDATE
+
+
 type Msg
     = NewGame
     | Mark Int
     | SortPoint
     | NewRandom Int
-
-
-
--- UPDATE
+    | NewEntries (Result Http.Error String)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -34,11 +36,25 @@ update msg model =
         NewRandom randomNumber ->
             { model | gameNumber = randomNumber } ! [ Cmd.none ]
 
+        NewEntries (Ok jsonString) ->
+            let
+                _ =
+                    Debug.log "It worked!" jsonString
+            in
+                ( model, Cmd.none )
+
+        NewEntries (Err error) ->
+            let
+                _ =
+                    Debug.log "Oooopss!" error
+            in
+                ( model, Cmd.none )
+
         NewGame ->
             { model
-                | entries = initialEntries
+                | gameNumber = model.gameNumber + 1
             }
-                ! [ generateRandomNumber
+                ! [ getEntries
                   ]
 
         Mark id ->
@@ -69,6 +85,19 @@ generateRandomNumber =
     Random.generate NewRandom (Random.int 1 100)
 
 
+entriesUrl =
+    "http://localhost:3000/random-entries"
+
+
+getEntries : Cmd Msg
+getEntries =
+    -- Http.send (\result -> NewEntries result) (Http.getString entriesUrl)
+    -- Http.send NewEntries (Http.getString entriesUrl)
+    entriesUrl
+        |> Http.getString
+        |> Http.send NewEntries
+
+
 
 -- MODEL
 
@@ -77,17 +106,8 @@ initialModel : Model
 initialModel =
     { name = "Riza"
     , gameNumber = 1
-    , entries = initialEntries
+    , entries = []
     }
-
-
-initialEntries : List Entry
-initialEntries =
-    [ Entry 3 "In The Cloud" 300 False
-    , Entry 1 "Future-Proof" 100 False
-    , Entry 4 "Rock-Star Ninja" 400 False
-    , Entry 2 "Doing Agile" 200 False
-    ]
 
 
 
@@ -176,7 +196,7 @@ viewScore sum =
 main : Program Never Model Msg
 main =
     Html.program
-        { init = ( initialModel, generateRandomNumber )
+        { init = ( initialModel, getEntries )
         , update = update
         , view = view
         , subscriptions = (\_ -> Sub.none)

@@ -104,7 +104,10 @@ view model =
         ]
 
 
-main : Html Msg
+main : Program Never Model Msg
 main =
-    update NewGame initialModel
-        |> view
+    Html.beginnerProgram
+        { model = initialModel
+        , update = update
+        , view = view
+        }

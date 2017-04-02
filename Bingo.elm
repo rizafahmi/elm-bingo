@@ -5,6 +5,9 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 
 
+-- TYPES
+
+
 type alias Entry =
     { id : Int, phrase : String, points : Int, marked : Bool }
 
@@ -23,14 +26,16 @@ type Msg
 -- UPDATE
 
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         NewGame ->
-            { model
+            ( { model
                 | gameNumber = model.gameNumber + 1
                 , entries = initialEntries
-            }
+              }
+            , Cmd.none
+            )
 
         Mark id ->
             let
@@ -40,14 +45,16 @@ update msg model =
                     else
                         e
             in
-                { model | entries = List.map markEntry model.entries }
+                ( { model | entries = List.map markEntry model.entries }, Cmd.none )
 
         SortPoint ->
-            { model
+            ( { model
                 | entries =
                     List.sortBy .points model.entries
                         |> List.reverse
-            }
+              }
+            , Cmd.none
+            )
 
 
 
@@ -69,6 +76,15 @@ initialEntries =
     , Entry 4 "Rock-Star Ninja" 400 False
     , Entry 2 "Doing Agile" 200 False
     ]
+
+
+
+-- VIEWS
+
+
+allEntriesMarked : List Entry -> Bool
+allEntriesMarked entries =
+    List.all .marked entries
 
 
 playerInfo : String -> Int -> String
@@ -134,8 +150,7 @@ sumMarkedPoints : List Entry -> Int
 sumMarkedPoints entries =
     entries
         |> List.filter .marked
-        |> List.map .points
-        |> List.sum
+        |> List.foldl (\e sum -> e.points + sum) 0
 
 
 viewScore : Int -> Html Msg
@@ -148,8 +163,9 @@ viewScore sum =
 
 main : Program Never Model Msg
 main =
-    Html.beginnerProgram
-        { model = initialModel
+    Html.program
+        { init = ( initialModel, Cmd.none )
         , update = update
         , view = view
+        , subscriptions = (\_ -> Sub.none)
         }

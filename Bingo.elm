@@ -32,14 +32,14 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         NewRandom randomNumber ->
-            ( { model | gameNumber = randomNumber }, Cmd.none )
+            { model | gameNumber = randomNumber } ! [ Cmd.none ]
 
         NewGame ->
-            ( { model
+            { model
                 | entries = initialEntries
-              }
-            , generateRandomNumber
-            )
+            }
+                ! [ generateRandomNumber
+                  ]
 
         Mark id ->
             let
@@ -49,16 +49,15 @@ update msg model =
                     else
                         e
             in
-                ( { model | entries = List.map markEntry model.entries }, Cmd.none )
+                { model | entries = List.map markEntry model.entries } ! [ Cmd.none ]
 
         SortPoint ->
-            ( { model
+            { model
                 | entries =
                     List.sortBy .points model.entries
                         |> List.reverse
-              }
-            , Cmd.none
-            )
+            }
+                ! [ Cmd.none ]
 
 
 

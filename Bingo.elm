@@ -2,6 +2,7 @@ module Bingo exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Events exposing (onClick)
 
 
 type alias Entry =
@@ -10,6 +11,21 @@ type alias Entry =
 
 type alias Model =
     { name : String, gameNumber : Int, entries : List Entry }
+
+
+
+-- UPDATE
+
+
+type Msg
+    = NewGame
+
+
+update : Msg -> Model -> Model
+update msg model =
+    case msg of
+        NewGame ->
+            { model | gameNumber = model.gameNumber + 1 }
 
 
 
@@ -37,7 +53,7 @@ playerInfo name gameNumber =
     name ++ " - Game #" ++ (toString gameNumber)
 
 
-viewPlayer : String -> Int -> Html msg
+viewPlayer : String -> Int -> Html Msg
 viewPlayer name gameNumber =
     let
         playerInfoText =
@@ -48,19 +64,19 @@ viewPlayer name gameNumber =
         h2 [ id "info", class "classy" ] [ playerInfoText ]
 
 
-viewHeader : String -> Html msg
+viewHeader : String -> Html Msg
 viewHeader title =
     header []
         [ h1 [] [ text title ] ]
 
 
-viewFooter : Html msg
+viewFooter : Html Msg
 viewFooter =
     footer []
         [ a [ href "http://elm-lang.org/" ] [ text "Powered by Elm" ] ]
 
 
-viewEntryList : Entry -> Html msg
+viewEntryList : Entry -> Html Msg
 viewEntryList entry =
     li []
         [ span [ class "phrase" ] [ text entry.phrase ]
@@ -68,24 +84,27 @@ viewEntryList entry =
         ]
 
 
-viewEntries : List Entry -> Html msg
+viewEntries : List Entry -> Html Msg
 viewEntries entries =
     entries
         |> List.map viewEntryList
         |> ul []
 
 
-view : Model -> Html msg
+view : Model -> Html Msg
 view model =
     div [ class "content" ]
         [ viewHeader "Buzzword Bingo"
         , viewPlayer model.name model.gameNumber
         , viewEntries model.entries
+        , div [ class "button-group" ]
+            [ button [ onClick NewGame ] [ text "NewGame" ] ]
         , div [ class "debug" ] [ text (toString model) ]
         , viewFooter
         ]
 
 
-main : Html msg
+main : Html Msg
 main =
-    view initialModel
+    update NewGame initialModel
+        |> view

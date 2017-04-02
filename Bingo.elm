@@ -3,6 +3,7 @@ module Bingo exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
+import Random
 
 
 -- TYPES
@@ -20,6 +21,7 @@ type Msg
     = NewGame
     | Mark Int
     | SortPoint
+    | NewRandom Int
 
 
 
@@ -29,12 +31,14 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        NewRandom randomNumber ->
+            ( { model | gameNumber = randomNumber }, Cmd.none )
+
         NewGame ->
             ( { model
-                | gameNumber = model.gameNumber + 1
-                , entries = initialEntries
+                | entries = initialEntries
               }
-            , Cmd.none
+            , generateRandomNumber
             )
 
         Mark id ->
@@ -55,6 +59,15 @@ update msg model =
               }
             , Cmd.none
             )
+
+
+
+-- COMMANDS
+
+
+generateRandomNumber : Cmd Msg
+generateRandomNumber =
+    Random.generate NewRandom (Random.int 1 100)
 
 
 
@@ -164,7 +177,7 @@ viewScore sum =
 main : Program Never Model Msg
 main =
     Html.program
-        { init = ( initialModel, Cmd.none )
+        { init = ( initialModel, generateRandomNumber )
         , update = update
         , view = view
         , subscriptions = (\_ -> Sub.none)

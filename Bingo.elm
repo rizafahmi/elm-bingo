@@ -13,13 +13,14 @@ type alias Model =
     { name : String, gameNumber : Int, entries : List Entry }
 
 
-
--- UPDATE
-
-
 type Msg
     = NewGame
     | Mark Int
+    | SortPoint
+
+
+
+-- UPDATE
 
 
 update : Msg -> Model -> Model
@@ -41,6 +42,13 @@ update msg model =
             in
                 { model | entries = List.map markEntry model.entries }
 
+        SortPoint ->
+            { model
+                | entries =
+                    List.sortBy .points model.entries
+                        |> List.reverse
+            }
+
 
 
 -- MODEL
@@ -56,9 +64,10 @@ initialModel =
 
 initialEntries : List Entry
 initialEntries =
-    [ Entry 1 "Future-Proof" 100 False
+    [ Entry 3 "In The Cloud" 300 False
+    , Entry 1 "Future-Proof" 100 False
+    , Entry 4 "Rock-Star Ninja" 400 False
     , Entry 2 "Doing Agile" 200 False
-    , Entry 3 "Scrum" 150 False
     ]
 
 
@@ -113,7 +122,9 @@ view model =
         , viewEntries model.entries
         , viewScore (sumMarkedPoints model.entries)
         , div [ class "button-group" ]
-            [ button [ onClick NewGame ] [ text "NewGame" ] ]
+            [ button [ onClick NewGame ] [ text "NewGame" ]
+            , button [ onClick SortPoint ] [ text "Sort" ]
+            ]
         , div [ class "debug" ] [ text (toString model) ]
         , viewFooter
         ]

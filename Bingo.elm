@@ -2,7 +2,7 @@ module Bingo exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onClick)
+import Html.Events exposing (onClick, onInput)
 import Random
 import Http
 import Json.Decode as Decode exposing (Decoder, field, succeed)
@@ -10,6 +10,11 @@ import Json.Encode as Encode
 
 
 -- TYPES
+
+
+type GameState
+    = Playing
+    | EnteringName
 
 
 type alias Score =
@@ -28,6 +33,8 @@ type alias Model =
     , gameNumber : Int
     , entries : List Entry
     , alertMessage : Maybe String
+    , inputName : String
+    , gameState : GameState
     }
 
 
@@ -44,11 +51,32 @@ type Msg
     | CloseAlert
     | ShareScore
     | NewScore (Result Http.Error Score)
+    | SetNameInput String
+    | SaveName
+    | CancelName
+    | ChangeGameState GameState
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        ChangeGameState state ->
+            { model | gameState = state, inputName = model.name } ! [ Cmd.none ]
+
+        CancelName ->
+            { model | inputName = "", gameState = Playing } ! [ Cmd.none ]
+
+        SaveName ->
+            { model
+                | name = model.inputName
+                , inputName = ""
+                , gameState = Playing
+            }
+                ! [ Cmd.none ]
+
+        SetNameInput value ->
+            { model | inputName = value } ! [ Cmd.none ]
+
         CloseAlert ->
             { model | alertMessage = Nothing } ! [ Cmd.none ]
 
@@ -153,6 +181,7 @@ generateRandomNumber =
     Random.generate NewRandom (Random.int 1 100)
 
 
+entriesUrl : String
 entriesUrl =
     "http://localhost:3000/random-entries"
 
@@ -192,6 +221,8 @@ initialModel =
     , gameNumber = 1
     , entries = []
     , alertMessage = Nothing
+    , inputName = ""
+    , gameState = EnteringName
     }
 
 
@@ -211,13 +242,11 @@ playerInfo name gameNumber =
 
 viewPlayer : String -> Int -> Html Msg
 viewPlayer name gameNumber =
-    let
-        playerInfoText =
-            playerInfo name gameNumber
-                |> String.toUpper
-                |> Html.text
-    in
-        h2 [ id "info", class "classy" ] [ playerInfoText ]
+    h2 [ id "info", class "classy" ]
+        [ a [ href "#", onClick (ChangeGameState EnteringName) ]
+            [ text name ]
+        , text (" - Game #" ++ (toString gameNumber))
+        ]
 
 
 viewHeader : String -> Html Msg
@@ -266,6 +295,7 @@ view model =
         [ viewHeader "Buzzword Bingo"
         , viewPlayer model.name model.gameNumber
         , viewAlertMessage model.alertMessage
+        , viewInputName model
         , viewEntries model.entries
         , viewScore (sumMarkedPoints model.entries)
         , div [ class "button-group" ]
@@ -291,6 +321,27 @@ viewScore sum =
         [ span [ class "label" ] [ text "Score" ]
         , span [ class "value" ] [ text (toString sum) ]
         ]
+
+
+viewInputName : Model -> Html Msg
+viewInputName model =
+    case model.gameState of
+        EnteringName ->
+            div [ class "" ]
+                [ input
+                    [ type_ "text"
+                    , placeholder "Who's playing?"
+                    , autofocus True
+                    , onInput SetNameInput
+                    , value model.inputName
+                    ]
+                    []
+                , button [ onClick SaveName ] [ text "Save" ]
+                , button [ onClick CancelName ] [ text "Cancel" ]
+                ]
+
+        Playing ->
+            text ""
 
 
 main : Program Never Model Msg

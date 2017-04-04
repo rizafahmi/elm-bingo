@@ -66,6 +66,21 @@
       "id": 3,
       "name": "Curly",
       "score": 2000
+    },
+    {
+      "name": "Riza",
+      "score": 725,
+      "id": 4
+    },
+    {
+      "name": "Riza",
+      "score": 850,
+      "id": 5
+    },
+    {
+      "name": "Riza",
+      "score": 1200,
+      "id": 6
     }
   ]
 }

@@ -6,9 +6,17 @@ import Html.Events exposing (onClick)
 import Random
 import Http
 import Json.Decode as Decode exposing (Decoder, field, succeed)
+import Json.Encode as Encode
 
 
 -- TYPES
+
+
+type alias Score =
+    { id : Int
+    , name : String
+    , score : Int
+    }
 
 
 type alias Entry =
@@ -16,7 +24,11 @@ type alias Entry =
 
 
 type alias Model =
-    { name : String, gameNumber : Int, entries : List Entry }
+    { name : String
+    , gameNumber : Int
+    , entries : List Entry
+    , alertMessage : Maybe String
+    }
 
 
 
@@ -29,11 +41,41 @@ type Msg
     | SortPoint
     | NewRandom Int
     | NewEntries (Result Http.Error (List Entry))
+    | CloseAlert
+    | ShareScore
+    | NewScore (Result Http.Error Score)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        CloseAlert ->
+            { model | alertMessage = Nothing } ! [ Cmd.none ]
+
+        ShareScore ->
+            model ! [ postScore model ]
+
+        NewScore (Ok score) ->
+            let
+                message =
+                    "Your "
+                        ++ (toString score.score)
+                        ++ " was successfully shared!"
+            in
+                { model | alertMessage = Just message }
+                    ! [ Cmd.none
+                      ]
+
+        NewScore (Err error) ->
+            let
+                message =
+                    "Cannot share your score. There was some error: "
+                        ++ (toString error)
+            in
+                { model | alertMessage = Just message }
+                    ! [ Cmd.none
+                      ]
+
         NewRandom randomNumber ->
             { model | gameNumber = randomNumber } ! [ Cmd.none ]
 
@@ -45,7 +87,7 @@ update msg model =
                 _ =
                     Debug.log "Oooopss!" error
             in
-                ( model, Cmd.none )
+                { model | alertMessage = Just (toString error) } ! [ Cmd.none ]
 
         NewGame ->
             { model
@@ -74,7 +116,7 @@ update msg model =
 
 
 
--- DECODERS
+-- DECODERS/ENCODERS
 
 
 entryDecoder : Decoder Entry
@@ -84,6 +126,22 @@ entryDecoder =
         (field "phrase" Decode.string)
         (field "points" Decode.int)
         (succeed False)
+
+
+scoreDecoder : Decoder Score
+scoreDecoder =
+    Decode.map3 Score
+        (field "id" Decode.int)
+        (field "name" Decode.string)
+        (field "score" Decode.int)
+
+
+encodeScore : Model -> Encode.Value
+encodeScore model =
+    Encode.object
+        [ ( "name", Encode.string model.name )
+        , ( "score", Encode.int (sumMarkedPoints model.entries) )
+        ]
 
 
 
@@ -108,6 +166,22 @@ getEntries =
         |> Http.send NewEntries
 
 
+postScore : Model -> Cmd Msg
+postScore model =
+    let
+        url =
+            "http://localhost:3000/scores"
+
+        body =
+            encodeScore model
+                |> Http.jsonBody
+
+        request =
+            Http.post url body scoreDecoder
+    in
+        Http.send NewScore request
+
+
 
 -- MODEL
 
@@ -117,6 +191,7 @@ initialModel =
     { name = "Riza"
     , gameNumber = 1
     , entries = []
+    , alertMessage = Nothing
     }
 
 
@@ -172,16 +247,31 @@ viewEntries entries =
         |> ul []
 
 
+viewAlertMessage : Maybe String -> Html Msg
+viewAlertMessage message =
+    case message of
+        Just textMessage ->
+            div [ class "alert" ]
+                [ text textMessage
+                , span [ class "close", onClick CloseAlert ] [ text "X" ]
+                ]
+
+        Nothing ->
+            text ""
+
+
 view : Model -> Html Msg
 view model =
     div [ class "content" ]
         [ viewHeader "Buzzword Bingo"
         , viewPlayer model.name model.gameNumber
+        , viewAlertMessage model.alertMessage
         , viewEntries model.entries
         , viewScore (sumMarkedPoints model.entries)
         , div [ class "button-group" ]
             [ button [ onClick NewGame ] [ text "NewGame" ]
             , button [ onClick SortPoint ] [ text "Sort" ]
+            , button [ onClick ShareScore ] [ text "Share" ]
             ]
         , div [ class "debug" ] [ text (toString model) ]
         , viewFooter

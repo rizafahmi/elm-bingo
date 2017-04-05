@@ -1,12 +1,13 @@
 module Bingo exposing (..)
 
 import Html exposing (..)
-import Html.Attributes exposing (..)
+import Html.Attributes exposing (class, value, autofocus, placeholder, type_, classList, href, id)
 import Html.Events exposing (onClick, onInput)
 import Random
 import Http
 import Json.Decode as Decode exposing (Decoder, field, succeed)
 import Json.Encode as Encode
+import Json.Decode.Pipeline exposing (decode, required, optional, hardcoded)
 
 
 -- TYPES
@@ -98,7 +99,7 @@ update msg model =
             let
                 message =
                     "Cannot share your score. There was some error: "
-                        ++ (toString error)
+                        ++ (httpError error)
             in
                 { model | alertMessage = Just message }
                     ! [ Cmd.none
@@ -108,14 +109,16 @@ update msg model =
             { model | gameNumber = randomNumber } ! [ Cmd.none ]
 
         NewEntries (Ok randomEntries) ->
-            { model | entries = randomEntries } ! [ Cmd.none ]
+            { model
+                | entries =
+                    randomEntries
+                        |> List.sortBy .points
+                        |> List.reverse
+            }
+                ! [ Cmd.none ]
 
         NewEntries (Err error) ->
-            let
-                _ =
-                    Debug.log "Oooopss!" error
-            in
-                { model | alertMessage = Just (toString error) } ! [ Cmd.none ]
+            { model | alertMessage = Just (httpError error) } ! [ Cmd.none ]
 
         NewGame ->
             { model
@@ -143,17 +146,41 @@ update msg model =
                 ! [ Cmd.none ]
 
 
+httpError : Http.Error -> String
+httpError error =
+    case error of
+        Http.NetworkError ->
+            "Is the server running?"
+
+        Http.Timeout ->
+            "Request timeout"
+
+        Http.BadStatus response ->
+            case response.status.code of
+                401 ->
+                    "Unauthorized"
+
+                404 ->
+                    "Not found"
+
+                code ->
+                    (toString code)
+
+        _ ->
+            toString error
+
+
 
 -- DECODERS/ENCODERS
 
 
 entryDecoder : Decoder Entry
 entryDecoder =
-    Decode.map4 Entry
-        (field "id" Decode.int)
-        (field "phrase" Decode.string)
-        (field "points" Decode.int)
-        (succeed False)
+    decode Entry
+        |> required "id" Decode.int
+        |> required "phrase" Decode.string
+        |> optional "points" Decode.int 100
+        |> hardcoded False
 
 
 scoreDecoder : Decoder Score

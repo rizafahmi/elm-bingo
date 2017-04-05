@@ -208,9 +208,14 @@ generateRandomNumber =
     Random.generate NewRandom (Random.int 1 100)
 
 
+apiUrl : String
+apiUrl =
+    "http://localhost:3000/"
+
+
 entriesUrl : String
 entriesUrl =
-    "http://localhost:3000/random-entries"
+    apiUrl ++ "random-entries"
 
 
 getEntries : Cmd Msg
@@ -226,7 +231,7 @@ postScore : Model -> Cmd Msg
 postScore model =
     let
         url =
-            "http://localhost:3000/scores"
+            apiUrl ++ "scores"
 
         body =
             encodeScore model
@@ -369,6 +374,16 @@ viewInputName model =
 
         Playing ->
             text ""
+
+
+isNothing : Maybe a -> Bool
+isNothing maybe =
+    case maybe of
+        Just _ ->
+            False
+
+        Nothing ->
+            True
 
 
 main : Program Never Model Msg

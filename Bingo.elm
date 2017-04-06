@@ -1,7 +1,7 @@
 module Bingo exposing (..)
 
 import Html exposing (..)
-import Html.Attributes exposing (class, value, autofocus, placeholder, type_, classList, href, id)
+import Html.Attributes exposing (class, value, autofocus, placeholder, type_, classList, href, id, disabled)
 import Html.Events exposing (onClick, onInput)
 import Random
 import Http
@@ -333,7 +333,7 @@ view model =
         , div [ class "button-group" ]
             [ button [ onClick NewGame ] [ text "NewGame" ]
             , button [ onClick SortPoint ] [ text "Sort" ]
-            , button [ onClick ShareScore ] [ text "Share" ]
+            , button [ onClick ShareScore, disabled (isPointZero model) ] [ text "Share" ]
             ]
         , div [ class "debug" ] [ text (toString model) ]
         , viewFooter
@@ -345,6 +345,11 @@ sumMarkedPoints entries =
     entries
         |> List.filter .marked
         |> List.foldl (\e sum -> e.points + sum) 0
+
+
+isPointZero : Model -> Bool
+isPointZero model =
+    (sumMarkedPoints model.entries) == 0
 
 
 viewScore : Int -> Html Msg
